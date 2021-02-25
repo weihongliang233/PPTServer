@@ -1,0 +1,18 @@
+POST /pptserver/ HTTP/1.1
+Host: www.weihongliang.club
+userID: 320180934321
+password: 222
+action: upload
+content: School
+newpassword: 222
+filename: Hongliang
+Cookie: csrftoken=bGjZy4DV5hnhEMFEFG13W7Uztvs9m5jXhQz6xSjnGBIF1wq3BF6099iF9tX5tmt7
+Content-Length: 207
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+----WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="/G:/Temp/物理科学与技术学院-科普大赛.xls"
+Content-Type: application/vnd.ms-excel
+
+(data)
+----WebKitFormBoundary7MA4YWxkTrZu0gW
