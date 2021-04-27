@@ -14,7 +14,7 @@
                 "0.0.0.0:9999"
             ],
             "django": true,
-            "pythonPath": "/home/ubuntu/miniconda3/envs/myenv/bin/python3",
+            "python": "/home/ubuntu/miniconda3/envs/myenv/bin/python3",
             "console": "integratedTerminal",
             //"preLaunchTask":"django"
         },

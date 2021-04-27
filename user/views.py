@@ -1,53 +1,66 @@
-from user import models
-from django.shortcuts import render
-from django.http import HttpResponse, HttpRequest
-from . import models
-import django.core.exceptions
-import os
 import errno
+import json
+import os
+
+import django.core.exceptions
+from django.db.models.query import QuerySet
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render
+
+from user import models
+
+from . import models
 
 User = models.User
 # Create your views here.
 
-
 def testProcess(request: HttpRequest):
+    method = request.method
     action = request.headers.get("action")
-    if action == "check":
-        oneUser=UserOperators(request)
-        checkResult=oneUser.check()
-        return HttpResponse(checkResult)
+    if method == "GET":
+        request.params = request.GET      
+        if action == "query":
+            oneUser=UserOperators(request)
+            queryResult=oneUser.query()
+            return JsonResponse(queryResult,safe=False)
     
-    elif action == "modifyPassword":
-        newpassword = request.headers.get('newpassword')
-        oneUser = UserOperators(request)
-        modifyPasswordResult=oneUser.modifyPassword(newpassword)
-        return HttpResponse(modifyPasswordResult)
+    elif method == "POST":
+        dataType = request.headers.get("content-type")#根据數據類型分類處理
+        if dataType == "application/json":
+            request.params = json.loads(request.body)          
+        else:
+            request.params = request.POST   
+        
+        if action == "modifyPassword":
+            newpassword = request.params['newpassword']
+            oneUser = UserOperators(request)
+            modifyPasswordResult=oneUser.modifyPassword(newpassword)
+            return JsonResponse(modifyPasswordResult,safe=False)
+        elif action == "upload":
+            oneStudent=Student(request)
+            filename=request.params['filename']
+            oneStudent.upload(filename)
+            return HttpResponse("Success")
+        elif action == "addStudent":
+            oneTeacher=Teacher(request)
+            oneTeacher.addStudent(request.params['addData'])
+            return HttpResponse("Success")
 
-    elif action == "query":
-        oneUser=UserOperators(request)
-        content=request.headers.get("content")
-        queryResult=oneUser.query(content)
-        return HttpResponse(queryResult)
-
-    elif action == 'upload':
-        oneStudent=Student(request)
-        filename=request.headers.get('filename')
-        oneStudent.upload(filename)
-        return HttpResponse("Success")
     else:
-        return HttpResponse("Can't match any action")
+        return HttpResponse("Erro")
 
 
 
 class UserOperators:
     def __init__(self, request: HttpRequest) -> None:
         self.request = request
-        self.Id: str = self.request.headers.get("userID")
+        self.Id: str = self.request.params['userID']
         self.Identity: str = self.check()
 
     def check(self) -> str:
-        password: str = self.request.headers.get("password")
-
+        password: str = self.request.params['password']
+        
+        #其實可以用filter()
         try:
             instance: User = User.objects.get(userID=self.Id)
         except django.core.exceptions.ObjectDoesNotExist:
@@ -67,10 +80,10 @@ class UserOperators:
         else:
             return "You can't modify password"
 
-    def query(self, content: str):
+    def query(self):
         if self.Identity == "Student" or self.Identity == 'Teacher':
-            instance: User = User.objects.get(userID=self.Id)
-            return eval("instance." + content)
+            instance: QuerySet = User.objects.filter(userID=self.Id) 
+            return instance.values()[0]
 
 
 class Student(UserOperators):
@@ -97,3 +110,27 @@ class Student(UserOperators):
                 destination.write(chunk)
 
         return "Success"
+
+
+class Teacher(UserOperators):
+    def __init__(self, request: HttpRequest) -> None:
+        super().__init__(request)
+        if self.Identity == 'Teacher':
+            instance: User = User.objects.get(userID=self.Id)
+            self.School: str = instance.School
+            self.Group: str = instance.Group
+    
+    def addStudent(self, info: dict): 
+        #for key,value in self.request.params.items():
+        #    User.objects.create(eval("key = value"))
+        User.objects.create(
+            userID=info['userID'],
+            Name=info['Name'],
+            School=info['School'],
+            Group=info['Group'],
+            password=info['password'],
+            filename=info['userID']+' File',
+            Identity=info['Identity']
+        )
+        return "Success"
+
