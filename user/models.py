@@ -11,3 +11,4 @@ class User(models.Model):
     password = models.CharField(default="000000000000", max_length=20)
     filename = models.CharField(default="No-File-name", max_length=20)
     Identity = models.CharField(default="Student", max_length=20)
+    Teacher =models.CharField(default="000000000",max_length=20)
