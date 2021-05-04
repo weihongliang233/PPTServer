@@ -4,7 +4,7 @@ import os
 
 import django.core.exceptions
 from django.db.models.query import QuerySet
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
 from user import models
@@ -13,6 +13,13 @@ from . import models
 
 User = models.User
 # Create your views here.
+
+def download(useID_toMe)->FileResponse:
+    instance: User =User.objects.get(userID=useID_toMe)
+    file=open(instance.filename,'rb')
+    response =FileResponse(file)
+    response['Content-Type']='application/octet-stream'
+    return 
 
 def testProcess(request: HttpRequest):
     method = request.method
@@ -108,7 +115,10 @@ class Student(UserOperators):
         with open(filenameAndPath, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
-
+        
+        instance: User = User.objects.get(userID=self.Id)
+        instance.filename=filenameAndPath 
+        instance.save()
         return "Success"
 
 
