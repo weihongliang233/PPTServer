@@ -30,6 +30,16 @@ def testProcess(request: HttpRequest):
             oneUser=UserOperators(request)
             queryResult=oneUser.query()
             return JsonResponse(queryResult,safe=False)
+
+        elif action=="download":
+            download_student_ID=request.params["download_student_ID"]
+            download(download_student_ID)
+            
+        elif action=="query_students_belong_to_One_Tearcher":
+            oneTeacher=Teacher(request)
+            studentIDs=oneTeacher.query_students_belong_to_me()
+            return JsonResponse(studentIDs)
+
     
     elif method == "POST":
         dataType = request.headers.get("content-type")#根据數據類型分類處理
@@ -52,10 +62,6 @@ def testProcess(request: HttpRequest):
             oneTeacher=Teacher(request)
             oneTeacher.addStudent(request.params['addData'])
             return HttpResponse("Success")
-        elif action=="download":
-            download_student_ID=request.params["download_student_ID"]
-            download(download_student_ID)
-
     else:
         return HttpResponse("Erro")
 
@@ -132,6 +138,7 @@ class Teacher(UserOperators):
             instance: User = User.objects.get(userID=self.Id)
             self.School: str = instance.School
             self.Group: str = instance.Group
+            self.Teacher_Name:str=instance.Name
     
     def addStudent(self, info: dict): 
         #for key,value in self.request.params.items():
@@ -143,7 +150,12 @@ class Teacher(UserOperators):
             Group=info['Group'],
             password=info['password'],
             filename=info['userID']+' File',
-            Identity=info['Identity']
+            Identity=info['Identity'],
+            Teacher=self.Teacher_Name
         )
         return "Success"
 
+    def query_students_belong_to_me(self):
+        students_object=User.objects.filter(Teacher=self.Teacher_Name)
+        userIDs=students_object.values("userID")
+        return userIDs
