@@ -19,7 +19,7 @@ def download(useID_toMe)->FileResponse:
     file=open(instance.filename,'rb')
     response =FileResponse(file)
     response['Content-Type']='application/octet-stream'
-    return 
+    return response
 
 def testProcess(request: HttpRequest):
     method = request.method
@@ -52,6 +52,9 @@ def testProcess(request: HttpRequest):
             oneTeacher=Teacher(request)
             oneTeacher.addStudent(request.params['addData'])
             return HttpResponse("Success")
+        elif action=="download":
+            download_student_ID=request.params["download_student_ID"]
+            download(download_student_ID)
 
     else:
         return HttpResponse("Erro")
