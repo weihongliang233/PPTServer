@@ -38,7 +38,6 @@ def testProcess(request: HttpRequest):
         elif action=="query_students_belong_to_One_Tearcher":
             oneTeacher=Teacher(request)
             students=oneTeacher.query_students_belong_to_me()
-            print(students)
             return JsonResponse({"students": students},safe=False)
     
     elif method == "POST":
@@ -52,7 +51,7 @@ def testProcess(request: HttpRequest):
             newpassword = request.params['newpassword']
             oneUser = UserOperators(request)
             modifyPasswordResult=oneUser.modifyPassword(newpassword)
-            return JsonResponse(modifyPasswordResult,safe=False)
+            return JsonResponse(modifyPasswordResult, safe=False)
         elif action == "upload":
             oneStudent=Student(request)
             filename=request.params['filename']
@@ -103,8 +102,10 @@ class UserOperators:
         if self.Identity == "Student" or self.Identity == 'Teacher':
             instance: QuerySet = User.objects.filter(userID=self.Id) 
             info = instance.values('Name', 'School', 'Group', 'Identity')[0]
-            return info
-
+            if info:
+                return info
+            else:
+                return {"msg":"fail"}
 
 class Student(UserOperators):
     def __init__(self, request: HttpRequest) -> None:
@@ -142,7 +143,6 @@ class Teacher(UserOperators):
             instance: User = User.objects.get(userID=self.Id)
             self.School: str = instance.School
             self.Group: str = instance.Group
-            self.Teacher_Name:str=instance.Name
     
     def addStudent(self, info: dict): 
         #for key,value in self.request.params.items():
@@ -150,16 +150,16 @@ class Teacher(UserOperators):
         User.objects.create(
             userID=info['userID'],
             Name=info['Name'],
-            School=info['School'],
+            School=self.School,
             Group=info['Group'],
-            password='12345',
-            filename=info['userID']+' File',
-            Identity=info['Identity'],
-            Teacher=self.Teacher_Name
+            password='12345',   
+            filename='null',
+            Identity='Student',
+            Teacher=self.Id
         )
         return True
 
     def query_students_belong_to_me(self):
-        students_object=User.objects.filter(Teacher=self.Teacher_Name)
+        students_object=User.objects.filter(Teacher=self.Id)
         students=students_object.values('userID','Name','Group')
         return list(students)
