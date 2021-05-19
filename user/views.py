@@ -39,6 +39,10 @@ def testProcess(request: HttpRequest):
             oneTeacher=Teacher(request)
             students=oneTeacher.query_students_belong_to_me()
             return JsonResponse({"students": students},safe=False)
+        elif action=="query_teachers_belong_to_One_Root":
+            oneRoot=Root(request)
+            teachers=oneRoot.query_teachers_belong_to_me()
+            return JsonResponse({"teachers": teachers},safe=False)
     
     elif method == "POST":
         dataType = request.headers.get("content-type")#根据數據類型分類處理
@@ -64,6 +68,16 @@ def testProcess(request: HttpRequest):
                 return JsonResponse({"msg":"success"},safe=False)
             else:
                 return JsonResponse({"msg":"faile"},safe=False)
+        elif action == "addTeacher":
+            oneRoot=Root(request)
+            ref = oneRoot.addTeacher(request.params['addData'])
+            if(ref):
+                return JsonResponse({"msg":"success"},safe=False)
+            else:
+                return JsonResponse({"msg":"faile"},safe=False)
+        elif action == "deletePerson":
+            oneRoot=Root(request)
+            oneRoot.removePerson(request.params['removeUserID'])
     else:
         return HttpResponse("Erro")
 
@@ -163,3 +177,35 @@ class Teacher(UserOperators):
         students_object=User.objects.filter(Teacher=self.Id)
         students=students_object.values('userID','Name','Group')
         return list(students)
+
+class Root(UserOperators):
+    def __init__(self, request: HttpRequest) -> None:
+        super().__init__(request)
+        if self.Identity == "Root":
+            pass
+        else:
+            raise ValueError("This is not the root")
+
+    def addTeacher(self, info: dict): 
+        #for key,value in self.request.params.items():
+        #    User.objects.create(eval("key = value"))
+        User.objects.create(
+            userID=info['userID'],
+            Name=info['Name'],
+            School=info['School'],
+            Group=info['Group'],
+            password='12345',   
+            filename='null',
+            Identity='Teacher',
+            Teacher=self.Id
+        )
+        return True
+    
+    def removePerson(self,userID: str):
+        User.objects.filter(userID=userID).delete()
+        return True
+
+    def query_teachers_belong_to_me(self):
+        teachers_object=User.objects.filter(Teacher=self.Id)
+        teachers=teachers_object.values('userID','Name','Group')
+        return list(teachers)
