@@ -17,7 +17,7 @@ User = models.User
 def download(useID_toMe)->FileResponse:
     instance: User =User.objects.get(userID=useID_toMe)
     file=open(instance.filename,'rb')
-    response =FileResponse(file)
+    response = FileResponse(file)
     response['Content-Type']='application/octet-stream'
     return response
 
@@ -32,14 +32,14 @@ def testProcess(request: HttpRequest):
             return JsonResponse(queryResult,safe=False)
 
         elif action=="download":
-            download_student_ID=request.params["download_student_ID"]
-            download(download_student_ID)
+            download_student_ID=request.params["userID"]
+            return download(download_student_ID)
             
         elif action=="query_students_belong_to_One_Tearcher":
             oneTeacher=Teacher(request)
-            studentIDs=oneTeacher.query_students_belong_to_me()
-            return JsonResponse(studentIDs)
-
+            students=oneTeacher.query_students_belong_to_me()
+            print(students)
+            return JsonResponse({"students": students},safe=False)
     
     elif method == "POST":
         dataType = request.headers.get("content-type")#根据數據類型分類處理
@@ -60,8 +60,11 @@ def testProcess(request: HttpRequest):
             return HttpResponse("Success")
         elif action == "addStudent":
             oneTeacher=Teacher(request)
-            oneTeacher.addStudent(request.params['addData'])
-            return HttpResponse("Success")
+            ref = oneTeacher.addStudent(request.params['addData'])
+            if(ref):
+                return JsonResponse({"msg":"success"},safe=False)
+            else:
+                return JsonResponse({"msg":"faile"},safe=False)
     else:
         return HttpResponse("Erro")
 
@@ -92,14 +95,15 @@ class UserOperators:
             instance: User = User.objects.get(userID=self.Id)
             instance.password = newpassword
             instance.save()
-            return instance.password
+            return {"msg":"success"}
         else:
-            return "You can't modify password"
+            return {"msg":"faile"}
 
     def query(self):
         if self.Identity == "Student" or self.Identity == 'Teacher':
             instance: QuerySet = User.objects.filter(userID=self.Id) 
-            return instance.values()[0]
+            info = instance.values('Name', 'School', 'Group', 'Identity')[0]
+            return info
 
 
 class Student(UserOperators):
@@ -148,14 +152,14 @@ class Teacher(UserOperators):
             Name=info['Name'],
             School=info['School'],
             Group=info['Group'],
-            password=info['password'],
+            password='12345',
             filename=info['userID']+' File',
             Identity=info['Identity'],
             Teacher=self.Teacher_Name
         )
-        return "Success"
+        return True
 
     def query_students_belong_to_me(self):
         students_object=User.objects.filter(Teacher=self.Teacher_Name)
-        userIDs=students_object.values("userID")
-        return userIDs
+        students=students_object.values('userID','Name','Group')
+        return list(students)
