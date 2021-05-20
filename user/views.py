@@ -58,8 +58,7 @@ def testProcess(request: HttpRequest):
             return JsonResponse(modifyPasswordResult, safe=False)
         elif action == "upload":
             oneStudent=Student(request)
-            filename=request.params['filename']
-            oneStudent.upload(filename)
+            oneStudent.upload()
             return HttpResponse("Success")
         elif action == "addStudent":
             oneTeacher=Teacher(request)
@@ -113,7 +112,7 @@ class UserOperators:
             return {"msg":"faile"}
 
     def query(self):
-        if self.Identity == "Student" or self.Identity == 'Teacher':
+        if self.Identity == "Student" or self.Identity == 'Teacher' or self.Identity == 'Root':
             instance: QuerySet = User.objects.filter(userID=self.Id) 
             info = instance.values('Name', 'School', 'Group', 'Identity')[0]
             if info:
@@ -129,9 +128,9 @@ class Student(UserOperators):
             self.School: str = instance.School
             self.Group: str = instance.Group
 
-    def upload(self, filename: str):
+    def upload(self,):
         file = self.request.FILES['file']
-        filenameAndPath: str = './FileStore/' + self.School + '/' + self.Group + '/' + filename
+        filenameAndPath: str = './FileStore/' + self.School + '/' + self.Group + '/' + self.Id
 
         if not os.path.exists(os.path.dirname(filenameAndPath)):
             try:
