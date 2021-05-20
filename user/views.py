@@ -77,7 +77,7 @@ def testProcess(request: HttpRequest):
                 return JsonResponse({"msg":"faile"},safe=False)
         elif action == "deletePerson":
             oneRoot=Root(request)
-            oneRoot.removePerson(request.params['removeUserID'])
+            oneRoot.removePerson(request.params['addData'])
     else:
         return HttpResponse("Erro")
 
@@ -175,7 +175,7 @@ class Teacher(UserOperators):
 
     def query_students_belong_to_me(self):
         students_object=User.objects.filter(Teacher=self.Id)
-        students=students_object.values('userID','Name','Group')
+        students=students_object.values('userID','Name','Group', 'filename')
         return list(students)
 
 class Root(UserOperators):
@@ -201,9 +201,14 @@ class Root(UserOperators):
         )
         return True
     
-    def removePerson(self,userID: str):
-        User.objects.filter(userID=userID).delete()
-        return True
+    def removePerson(self, info: dict):
+        user_object = User.objects.filter(userID=info['userID'])
+        ref = user_object.values('userID','Name','Group','School')
+        if ref == info:
+            user_object.delete()
+            return True
+        else:
+            return False
 
     def query_teachers_belong_to_me(self):
         teachers_object=User.objects.filter(Teacher=self.Id)
